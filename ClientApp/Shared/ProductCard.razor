@@ -1,0 +1,54 @@
+@* 
+    ProductCard Component
+    
+    Displays a single product in a Bootstrap card format with essential information.
+    Provides a "View Details" button that triggers navigation to the product details page.
+    
+    Parameters:
+    - Product: The product to display
+    - OnDetailsClicked: Event callback when user clicks "View Details"
+*@
+
+<div class="card mb-3 shadow-sm">
+    <div class="card-body">
+        <h5 class="card-title">@Product.Name</h5>
+        <p class="card-text text-muted">@Product.Description</p>
+        <div class="mb-2">
+            <span class="badge bg-secondary">@Product.Category.Name</span>
+        </div>
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <strong class="text-success">$@Product.Price.ToString("F2")</strong>
+                <span class="ms-2">Stock: @Product.Stock</span>
+            </div>
+            <button class="btn btn-primary btn-sm" @onclick="OnViewDetails">
+                View Details
+            </button>
+        </div>
+    </div>
+</div>
+
+@code {
+    /// <summary>
+    /// The product to display in the card
+    /// </summary>
+    [Parameter]
+    public Product Product { get; set; } = new();
+
+    /// <summary>
+    /// Event callback invoked when the user clicks "View Details"
+    /// </summary>
+    /// <remarks>
+    /// Passes the product ID to the parent component for navigation handling
+    /// </remarks>
+    [Parameter]
+    public EventCallback<int> OnDetailsClicked { get; set; }
+
+    /// <summary>
+    /// Handles the "View Details" button click
+    /// </summary>
+    private async Task OnViewDetails()
+    {
+        await OnDetailsClicked.InvokeAsync(Product.Id);
+    }
+}

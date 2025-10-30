@@ -1,0 +1,165 @@
+@page "/product/delete/{id:int}"
+@using ClientApp.Models
+@using ClientApp.Services
+@inject ProductService ProductService
+@inject NavigationManager Navigation
+@inject ErrorHandlerService ErrorHandler
+@inject ToastService ToastService
+
+<PageTitle>Delete Product - InventoryHub</PageTitle>
+
+<div class="container mt-4">
+    <div class="alert alert-warning">
+        <h2>⚠️ Delete Product</h2>
+        <p>Are you sure you want to delete this product? This action cannot be undone.</p>
+    </div>
+
+    <!-- Error Alert with Retry Support -->
+    <ErrorAlert Error="@currentError" 
+                OnDismiss="() => currentError = null" 
+                OnRetry="RetryLastOperation" />
+
+    @if (!string.IsNullOrEmpty(loadingMessage))
+    {
+        <div class="text-center">
+            <div class="spinner-border" role="status">
+                <span class="visually-hidden">@loadingMessage</span>
+            </div>
+            <p class="mt-2 text-muted">@loadingMessage</p>
+        </div>
+    }
+    else if (product != null)
+    {
+        <div class="card">
+            <div class="card-header">
+                <h3>@product.Name</h3>
+            </div>
+            <div class="card-body">
+                <dl class="row">
+                    <dt class="col-sm-3">Description:</dt>
+                    <dd class="col-sm-9">@product.Description</dd>
+
+                    <dt class="col-sm-3">Price:</dt>
+                    <dd class="col-sm-9">$@product.Price.ToString("F2")</dd>
+
+                    <dt class="col-sm-3">Stock:</dt>
+                    <dd class="col-sm-9">@product.Stock</dd>
+
+                    <dt class="col-sm-3">Category:</dt>
+                    <dd class="col-sm-9">@product.Category.Name</dd>
+                </dl>
+
+                <div class="mt-4">
+                    <button class="btn btn-danger me-2" @onclick="HandleDelete" disabled="@isDeleting">
+                        @if (isDeleting)
+                        {
+                            <span class="spinner-border spinner-border-sm me-1"></span>
+                        }
+                        🗑️ Confirm Delete
+                    </button>
+                    <button class="btn btn-secondary" @onclick="HandleCancel" disabled="@isDeleting">
+                        Cancel
+                    </button>
+                </div>
+            </div>
+        </div>
+    }
+    else
+    {
+        <div class="alert alert-warning">
+            Product not found.
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter]
+    public int Id { get; set; }
+
+    private Product? product;
+    private string loadingMessage = string.Empty;
+    private bool isDeleting = false;
+    private UserError? currentError;
+    private Func<Task>? lastFailedOperation;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadProductAsync();
+    }
+
+    /// <summary>
+    /// Loads product details from the server
+    /// </summary>
+    private async Task LoadProductAsync()
+    {
+        lastFailedOperation = LoadProductAsync;
+        
+        try
+        {
+            loadingMessage = "Loading product details...";
+            currentError = null;
+            product = await ProductService.GetProductByIdAsync(Id);
+            
+            // If product is null, it means it was not found (404)
+            // Don't set an error message - let the UI show "Product not found"
+        }
+        catch (Exception ex)
+        {
+            currentError = ErrorHandler.HandleException(ex, "loading product details");
+        }
+        finally
+        {
+            loadingMessage = string.Empty;
+        }
+    }
+
+    /// <summary>
+    /// Handles product deletion
+    /// </summary>
+    private async Task HandleDelete()
+    {
+        lastFailedOperation = HandleDelete;
+        
+        try
+        {
+            isDeleting = true;
+            loadingMessage = "Deleting product...";
+            currentError = null;
+            
+            // Store product name before deletion
+            var productName = product?.Name ?? "Product";
+            
+            await ProductService.DeleteProductAsync(Id);
+            ToastService.ShowSuccess($"'{productName}' deleted successfully!");
+            Navigation.NavigateTo($"/products?refresh={DateTime.Now.Ticks}");
+        }
+        catch (Exception ex)
+        {
+            currentError = ErrorHandler.HandleException(ex, "deleting product");
+            isDeleting = false;
+        }
+        finally
+        {
+            loadingMessage = string.Empty;
+        }
+    }
+
+    /// <summary>
+    /// Retries the last failed operation
+    /// </summary>
+    private async Task RetryLastOperation()
+    {
+        if (lastFailedOperation != null)
+        {
+            await lastFailedOperation();
+        }
+    }
+
+    /// <summary>
+    /// Handles cancel action and returns to products list
+    /// </summary>
+    private void HandleCancel()
+    {
+        Navigation.NavigateTo($"/products?refresh={DateTime.Now.Ticks}");
+    }
+}

@@ -1,0 +1,82 @@
+@using ClientApp.Models
+@using ClientApp.Services
+@inject ToastService ToastService
+@implements IDisposable
+
+<div class="toast-container position-fixed top-0 end-0 p-3" style="z-index: 9999;">
+    @foreach (var toast in ToastService.Toasts)
+    {
+        <div class="toast show @GetToastClass(toast.Type)" role="alert" aria-live="polite" aria-atomic="true">
+            <div class="toast-header">
+                <strong class="me-auto">
+                    @GetToastIcon(toast.Type) @GetToastTitle(toast.Type)
+                </strong>
+                <small>@GetTimeAgo(toast.CreatedAt)</small>
+                <button type="button" class="btn-close" @onclick="() => ToastService.RemoveToast(toast.Id)" aria-label="Close"></button>
+            </div>
+            <div class="toast-body">
+                @toast.Message
+            </div>
+        </div>
+    }
+</div>
+
+@code {
+    protected override void OnInitialized()
+    {
+        ToastService.OnChange += StateHasChanged;
+    }
+
+    public void Dispose()
+    {
+        ToastService.OnChange -= StateHasChanged;
+    }
+
+    private string GetToastClass(ToastType type)
+    {
+        return type switch
+        {
+            ToastType.Success => "bg-success text-white",
+            ToastType.Info => "bg-info text-white",
+            ToastType.Warning => "bg-warning text-dark",
+            ToastType.Error => "bg-danger text-white",
+            _ => "bg-light"
+        };
+    }
+
+    private string GetToastIcon(ToastType type)
+    {
+        return type switch
+        {
+            ToastType.Success => "✅",
+            ToastType.Info => "ℹ️",
+            ToastType.Warning => "⚠️",
+            ToastType.Error => "❌",
+            _ => "📢"
+        };
+    }
+
+    private string GetToastTitle(ToastType type)
+    {
+        return type switch
+        {
+            ToastType.Success => "Success",
+            ToastType.Info => "Info",
+            ToastType.Warning => "Warning",
+            ToastType.Error => "Error",
+            _ => "Notification"
+        };
+    }
+
+    private string GetTimeAgo(DateTime createdAt)
+    {
+        var elapsed = DateTime.Now - createdAt;
+        if (elapsed.TotalSeconds < 10)
+            return "just now";
+        if (elapsed.TotalSeconds < 60)
+            return $"{(int)elapsed.TotalSeconds}s ago";
+        if (elapsed.TotalMinutes < 60)
+            return $"{(int)elapsed.TotalMinutes}m ago";
+        return $"{(int)elapsed.TotalHours}h ago";
+    }
+}

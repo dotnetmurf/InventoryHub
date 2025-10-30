@@ -1,0 +1,74 @@
+@ServerApp_HostAddress = http://localhost:5132
+
+### Get all products
+GET {{ServerApp_HostAddress}}/api/products
+Accept: application/json
+
+### Get product by ID (replace {id} with an actual product ID, e.g., 1)
+GET {{ServerApp_HostAddress}}/api/product/1
+Accept: application/json
+
+### Create a new product
+POST {{ServerApp_HostAddress}}/api/product
+Content-Type: application/json
+
+{
+    "name": "Smart Watch",
+    "description": "Latest model smart watch with fitness tracking",
+    "price": 199.99,
+    "stock": 50,
+    "category": {
+        "id": 101,
+        "name": "Electronics"
+    }
+}
+
+### Update an existing product (replace {id} with an actual product ID, e.g., 1)
+PUT {{ServerApp_HostAddress}}/api/product/1
+Content-Type: application/json
+
+{
+    "name": "Gaming Laptop",
+    "description": "High-performance gaming laptop with RGB keyboard",
+    "price": 1499.99,
+    "stock": 15,
+    "category": {
+        "id": 101,
+        "name": "Electronics"
+    }
+}
+
+### Delete a product (replace {id} with an actual product ID, e.g., 1)
+DELETE {{ServerApp_HostAddress}}/api/product/1
+
+### Test creating a product with invalid data (missing name)
+POST {{ServerApp_HostAddress}}/api/product
+Content-Type: application/json
+
+{
+    "description": "This should fail validation",
+    "price": 99.99,
+    "stock": 10,
+    "category": {
+        "id": 102,
+        "name": "Accessories"
+    }
+}
+
+### Test updating a product with invalid data (missing name)
+PUT {{ServerApp_HostAddress}}/api/product/1
+Content-Type: application/json
+
+{
+    "description": "This should fail validation",
+    "price": 99.99,
+    "stock": 10,
+    "category": {
+        "id": 102,
+        "name": "Accessories"
+    }
+}
+
+### Test getting a non-existent product
+GET {{ServerApp_HostAddress}}/api/product/999
+Accept: application/json

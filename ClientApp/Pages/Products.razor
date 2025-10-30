@@ -1,0 +1,625 @@
+@page "/products"
+@using ClientApp.Models
+@using ClientApp.Services
+@using Microsoft.AspNetCore.Components.Routing
+@implements IDisposable
+@inject ProductService ProductService
+@inject ProductsStateService StateService
+@inject NavigationManager Navigation
+@inject ErrorHandlerService ErrorHandler
+@inject ToastService ToastService
+
+<PageTitle>Products - InventoryHub</PageTitle>
+
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div class="d-flex align-items-center gap-5">
+            <h1 class="mb-0">Products</h1>
+            <button class="btn btn-primary" @onclick="ShowRefreshModal" disabled="@isRefreshing">
+                @if (isRefreshing)
+                {
+                    <span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
+                    <span>Refreshing...</span>
+                }
+                else
+                {
+                    <span>🔄 Refresh Sample Data</span>
+                }
+            </button>
+        </div>
+        <button class="btn btn-success" @onclick="NavigateToCreate">
+            ➕ Add New Product
+        </button>
+    </div>
+
+    <!-- Search and Filter Bar -->
+    <div class="row mb-3">
+        <!-- Search by Name -->
+        <div class="col-md-6 col-lg-4">
+            <div class="input-group">
+                <span class="input-group-text">
+                    🔍
+                </span>
+                <input type="search" 
+                       class="form-control" 
+                       placeholder="Search products by name..."
+                       value="@searchQuery"
+                       @oninput="OnSearchInput"
+                       aria-label="Search products" />
+                @if (!string.IsNullOrWhiteSpace(searchQuery))
+                {
+                    <button class="btn btn-outline-secondary" type="button" @onclick="ClearSearch" title="Clear search">
+                        ×
+                    </button>
+                }
+            </div>
+        </div>
+
+        <!-- Filter by Category -->
+        <div class="col-md-6 col-lg-4">
+            <div class="input-group">
+                <span class="input-group-text">
+                    🏷️
+                </span>
+                <select class="form-select" 
+                        value="@selectedCategoryId" 
+                        @onchange="OnCategoryChanged"
+                        aria-label="Filter by category">
+                    <option value="">Show All Categories</option>
+                    @if (categories != null)
+                    {
+                        @foreach (var category in categories)
+                        {
+                            <option value="@category.Id">@category.Name</option>
+                        }
+                    }
+                </select>
+                @if (StateService.CategoryId.HasValue)
+                {
+                    <button class="btn btn-outline-secondary" type="button" @onclick="ClearCategoryFilter" title="Clear category filter">
+                        ×
+                    </button>
+                }
+            </div>
+        </div>
+    </div>
+
+    <!-- Active Filter Badges -->
+    @if (!string.IsNullOrWhiteSpace(StateService.SearchTerm) || StateService.CategoryId.HasValue)
+    {
+        <div class="mb-3">
+            <span class="text-muted me-2">Active Filters:</span>
+            @if (!string.IsNullOrWhiteSpace(StateService.SearchTerm))
+            {
+                <span class="badge bg-primary me-2">
+                    Search: @StateService.SearchTerm
+                    <button type="button" class="btn-close btn-close-white ms-1" 
+                            style="font-size: 0.6rem;" @onclick="ClearSearch" aria-label="Clear search"></button>
+                </span>
+            }
+            @if (StateService.CategoryId.HasValue && categories != null)
+            {
+                var categoryName = categories.FirstOrDefault(c => c.Id == StateService.CategoryId.Value)?.Name;
+                <span class="badge bg-secondary me-2">
+                    Category: @categoryName
+                    <button type="button" class="btn-close btn-close-white ms-1" 
+                            style="font-size: 0.6rem;" @onclick="ClearCategoryFilter" aria-label="Clear category"></button>
+                </span>
+            }
+        </div>
+    }
+
+    <!-- Refresh Confirmation Modal -->
+    @if (showRefreshModal)
+    {
+        <div class="modal fade show d-block" tabindex="-1" role="dialog" style="background-color: rgba(0,0,0,0.5);">
+            <div class="modal-dialog modal-dialog-centered" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Confirm Refresh Sample Data</h5>
+                        <button type="button" class="btn-close" @onclick="HideRefreshModal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="alert alert-warning mb-3" role="alert">
+                            ⚠️ <strong>Warning:</strong> This action cannot be undone.
+                        </div>
+                        <p>This will:</p>
+                        <ul>
+                            <li>Delete all current products from the database</li>
+                            <li>Reset the database with fresh sample data (36 products)</li>
+                            <li>Clear all cached product data</li>
+                        </ul>
+                        <p class="mb-0">Are you sure you want to continue?</p>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" @onclick="HideRefreshModal">
+                            × Cancel
+                        </button>
+                        <button type="button" class="btn btn-primary" @onclick="ConfirmRefreshSampleData">
+                            ✓ OK, Refresh Data
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+
+    <!-- Error Alert with Retry Support -->
+    <ErrorAlert Error="@currentError" 
+                OnDismiss="() => currentError = null" 
+                OnRetry="RetryLastOperation" />
+
+    @if (!string.IsNullOrEmpty(loadingMessage))
+    {
+        <div class="text-center">
+            <div class="spinner-border" role="status">
+                <span class="visually-hidden">@loadingMessage</span>
+            </div>
+            <p class="mt-2 text-muted">@loadingMessage</p>
+        </div>
+    }
+    else if (products != null && products.Items.Any())
+    {
+        <div class="row">
+            @foreach (var product in products.Items)
+            {
+                <div class="col-md-6 col-lg-4">
+                    <ProductCard Product="@product" OnDetailsClicked="NavigateToDetails" />
+                </div>
+            }
+        </div>
+
+        <!-- Pagination Controls -->
+        <div class="mt-4">
+            <div class="row align-items-center">
+                <div class="col-md-6">
+                    <p class="text-muted mb-0">
+                        Showing page @products.PageNumber of @products.TotalPages 
+                        (@products.TotalCount total products)
+                    </p>
+                </div>
+                <div class="col-md-6">
+                    <div class="d-flex justify-content-md-end align-items-center gap-2">
+                        <label for="pageSize" class="form-label mb-0">Items per page:</label>
+                        <select id="pageSize" class="form-select" style="width: auto;" 
+                                value="@StateService.PageSize" @onchange="OnPageSizeChanged">
+                            <option value="12">12</option>
+                            <option value="24">24</option>
+                            <option value="36">36</option>
+                            <option value="48">48</option>
+                            <option value="60">60</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+            
+            <nav aria-label="Product pagination" class="mt-3">
+                <ul class="pagination justify-content-center">
+                    <li class="page-item @(!products.HasPreviousPage ? "disabled" : "")">
+                        <button class="page-link" @onclick="() => ChangePage(1)" 
+                                disabled="@(!products.HasPreviousPage)">
+                            First
+                        </button>
+                    </li>
+                    <li class="page-item @(!products.HasPreviousPage ? "disabled" : "")">
+                        <button class="page-link" @onclick="() => ChangePage(StateService.PageNumber - 1)" 
+                                disabled="@(!products.HasPreviousPage)">
+                            Previous
+                        </button>
+                    </li>
+                    
+                    @for (int i = GetStartPage(); i <= GetEndPage(); i++)
+                    {
+                        var pageNumber = i;
+                        <li class="page-item @(pageNumber == StateService.PageNumber ? "active" : "")">
+                            <button class="page-link" @onclick="() => ChangePage(pageNumber)">
+                                @pageNumber
+                            </button>
+                        </li>
+                    }
+                    
+                    <li class="page-item @(!products.HasNextPage ? "disabled" : "")">
+                        <button class="page-link" @onclick="() => ChangePage(StateService.PageNumber + 1)" 
+                                disabled="@(!products.HasNextPage)">
+                            Next
+                        </button>
+                    </li>
+                    <li class="page-item @(!products.HasNextPage ? "disabled" : "")">
+                        <button class="page-link" @onclick="() => ChangePage(products.TotalPages)" 
+                                disabled="@(!products.HasNextPage)">
+                            Last
+                        </button>
+                    </li>
+                </ul>
+            </nav>
+        </div>
+    }
+    else
+    {
+        @if (!string.IsNullOrWhiteSpace(StateService.SearchTerm) || StateService.CategoryId.HasValue)
+        {
+            <div class="alert alert-warning">
+                <h5 class="alert-heading">
+                    🔍 No Results Found
+                </h5>
+                <p class="mb-2">
+                    No products match your filters:
+                    @if (!string.IsNullOrWhiteSpace(StateService.SearchTerm))
+                    {
+                        <span>Search: <strong>"@StateService.SearchTerm"</strong></span>
+                    }
+                    @if (StateService.CategoryId.HasValue && categories != null)
+                    {
+                        var categoryName = categories.FirstOrDefault(c => c.Id == StateService.CategoryId.Value)?.Name;
+                        @if (!string.IsNullOrWhiteSpace(StateService.SearchTerm)) 
+                        { 
+                            <span> | </span> 
+                        }
+                        <span>Category: <strong>@categoryName</strong></span>
+                    }
+                </p>
+                <hr />
+                <p class="mb-0">
+                    <button class="btn btn-sm btn-outline-secondary" @onclick="ClearAllFilters">
+                        × Clear All Filters
+                    </button>
+                    to see all products
+                </p>
+            </div>
+        }
+        else
+        {
+            <div class="alert alert-info">
+                No products found. Click "Add New Product" to create one.
+            </div>
+        }
+    }
+</div>
+
+@code {
+    private PaginatedList<Product>? products;
+    private Category[]? categories;
+    private string loadingMessage = string.Empty;
+    private bool isRefreshing = false;
+    private bool showRefreshModal = false;
+    private UserError? currentError;
+    private Func<Task>? lastFailedOperation;
+    private string searchQuery = string.Empty;
+    private string selectedCategoryId = string.Empty;
+    private Timer? searchDebounceTimer;
+
+    protected override async Task OnInitializedAsync()
+    {
+        loadingMessage = "Initializing...";
+        
+        // Subscribe to navigation events to reload when returning from other pages
+        Navigation.LocationChanged += OnLocationChanged;
+        
+        // Initialize from state
+        searchQuery = StateService.SearchTerm;
+        selectedCategoryId = StateService.CategoryId?.ToString() ?? string.Empty;
+        
+        // Load categories for dropdown
+        await LoadCategoriesAsync();
+        
+        // Load products
+        await LoadProductsAsync();
+    }
+
+    /// <summary>
+    /// Handles navigation events to reload data when returning to this page
+    /// </summary>
+    private async void OnLocationChanged(object? sender, LocationChangedEventArgs e)
+    {
+        // Only reload if navigating to the products page
+        if (e.Location.Contains("/products"))
+        {
+            await InvokeAsync(async () =>
+            {
+                await LoadProductsAsync();
+                StateHasChanged();
+            });
+        }
+    }
+
+    public void Dispose()
+    {
+        searchDebounceTimer?.Dispose();
+        Navigation.LocationChanged -= OnLocationChanged;
+    }
+
+    /// <summary>
+    /// Loads available categories from the server
+    /// </summary>
+    private async Task LoadCategoriesAsync()
+    {
+        lastFailedOperation = LoadCategoriesAsync;
+        
+        try
+        {
+            categories = await ProductService.GetCategoriesAsync();
+        }
+        catch (Exception ex)
+        {
+            currentError = ErrorHandler.HandleException(ex, "loading categories");
+        }
+    }
+
+    /// <summary>
+    /// Loads products from the server with current pagination and filter settings
+    /// </summary>
+    private async Task LoadProductsAsync()
+    {
+        lastFailedOperation = LoadProductsAsync;
+        
+        try
+        {
+            // Set context-aware loading message
+            loadingMessage = GetLoadingMessage();
+            currentError = null;
+            products = await ProductService.GetProductsAsync(
+                pageNumber: StateService.PageNumber, 
+                pageSize: StateService.PageSize,
+                searchTerm: StateService.SearchTerm,
+                categoryId: StateService.CategoryId);
+        }
+        catch (Exception ex)
+        {
+            currentError = ErrorHandler.HandleException(ex, "loading products");
+        }
+        finally
+        {
+            loadingMessage = string.Empty;
+        }
+    }
+
+    /// <summary>
+    /// Changes to the specified page number
+    /// </summary>
+    /// <param name="pageNumber">The page number to navigate to</param>
+    private async Task ChangePage(int pageNumber)
+    {
+        if (pageNumber < 1 || (products != null && pageNumber > products.TotalPages))
+        {
+            return;
+        }
+
+        StateService.SetPageNumber(pageNumber);
+        await LoadProductsAsync();
+    }
+
+    /// <summary>
+    /// Handles the page size change event
+    /// </summary>
+    /// <param name="e">The change event arguments</param>
+    private async Task OnPageSizeChanged(ChangeEventArgs e)
+    {
+        if (int.TryParse(e.Value?.ToString(), out int newPageSize))
+        {
+            StateService.SetPageSize(newPageSize);
+            StateService.SetPageNumber(1); // Reset to first page when changing page size
+            await LoadProductsAsync();
+        }
+    }
+
+    /// <summary>
+    /// Calculates the starting page number for pagination display
+    /// </summary>
+    /// <returns>The starting page number</returns>
+    private int GetStartPage()
+    {
+        if (products == null) return 1;
+
+        // Show up to 5 page numbers at a time
+        int maxPagesToShow = 5;
+        int halfWindow = maxPagesToShow / 2;
+
+        int startPage = Math.Max(1, StateService.PageNumber - halfWindow);
+        int endPage = Math.Min(products.TotalPages, startPage + maxPagesToShow - 1);
+
+        // Adjust start if we're near the end
+        if (endPage - startPage < maxPagesToShow - 1)
+        {
+            startPage = Math.Max(1, endPage - maxPagesToShow + 1);
+        }
+
+        return startPage;
+    }
+
+    /// <summary>
+    /// Calculates the ending page number for pagination display
+    /// </summary>
+    /// <returns>The ending page number</returns>
+    private int GetEndPage()
+    {
+        if (products == null) return 1;
+
+        int maxPagesToShow = 5;
+        int halfWindow = maxPagesToShow / 2;
+
+        int startPage = Math.Max(1, StateService.PageNumber - halfWindow);
+        int endPage = Math.Min(products.TotalPages, startPage + maxPagesToShow - 1);
+
+        return endPage;
+    }
+
+    /// <summary>
+    /// Shows the refresh confirmation modal
+    /// </summary>
+    private void ShowRefreshModal()
+    {
+        showRefreshModal = true;
+    }
+
+    /// <summary>
+    /// Hides the refresh confirmation modal
+    /// </summary>
+    private void HideRefreshModal()
+    {
+        showRefreshModal = false;
+    }
+
+    /// <summary>
+    /// Confirms and executes the sample data refresh
+    /// </summary>
+    private async Task ConfirmRefreshSampleData()
+    {
+        showRefreshModal = false;
+        await RefreshSampleData();
+    }
+
+    /// <summary>
+    /// Refreshes the database with fresh sample data
+    /// </summary>
+    private async Task RefreshSampleData()
+    {
+        lastFailedOperation = RefreshSampleData;
+        
+        try
+        {
+            isRefreshing = true;
+            loadingMessage = "Refreshing sample data...";
+            currentError = null;
+            
+            // Call the API to refresh sample data
+            await ProductService.RefreshSampleDataAsync();
+            
+            ToastService.ShowSuccess("Sample data refreshed successfully!");
+            
+            // Reset to first page and reload products
+            StateService.SetPageNumber(1);
+            await LoadProductsAsync();
+        }
+        catch (Exception ex)
+        {
+            currentError = ErrorHandler.HandleException(ex, "refreshing sample data");
+        }
+        finally
+        {
+            isRefreshing = false;
+            loadingMessage = string.Empty;
+        }
+    }
+
+    /// <summary>
+    /// Handles search input with debouncing to avoid excessive API calls
+    /// </summary>
+    private void OnSearchInput(ChangeEventArgs e)
+    {
+        searchQuery = e.Value?.ToString() ?? string.Empty;
+        
+        // Update UI immediately to show/hide clear button
+        StateHasChanged();
+        
+        // Dispose existing timer
+        searchDebounceTimer?.Dispose();
+        
+        // Create new timer for debounced search (500ms delay)
+        searchDebounceTimer = new Timer(async _ =>
+        {
+            await InvokeAsync(async () =>
+            {
+                StateService.SetSearchTerm(searchQuery);
+                await LoadProductsAsync();
+                StateHasChanged();
+            });
+        }, null, 500, Timeout.Infinite);
+    }
+
+    /// <summary>
+    /// Clears the search filter and reloads all products
+    /// </summary>
+    private async Task ClearSearch()
+    {
+        searchQuery = string.Empty;
+        StateService.SetSearchTerm(string.Empty);
+        await LoadProductsAsync();
+    }
+
+    /// <summary>
+    /// Handles category filter change
+    /// </summary>
+    private async Task OnCategoryChanged(ChangeEventArgs e)
+    {
+        selectedCategoryId = e.Value?.ToString() ?? string.Empty;
+        
+        // Parse category ID (empty string = null = show all)
+        int? categoryId = string.IsNullOrEmpty(selectedCategoryId) 
+            ? null 
+            : int.Parse(selectedCategoryId);
+        
+        StateService.SetCategoryId(categoryId);
+        await LoadProductsAsync();
+    }
+
+    /// <summary>
+    /// Clears the category filter and reloads all products
+    /// </summary>
+    private async Task ClearCategoryFilter()
+    {
+        selectedCategoryId = string.Empty;
+        StateService.SetCategoryId(null);
+        await LoadProductsAsync();
+    }
+
+    /// <summary>
+    /// Clears all filters (search and category) and reloads all products
+    /// </summary>
+    private async Task ClearAllFilters()
+    {
+        searchQuery = string.Empty;
+        selectedCategoryId = string.Empty;
+        StateService.SetSearchTerm(string.Empty);
+        StateService.SetCategoryId(null);
+        await LoadProductsAsync();
+    }
+
+    /// <summary>
+    /// Gets context-aware loading message based on active filters
+    /// </summary>
+    private string GetLoadingMessage()
+    {
+        var hasSearch = !string.IsNullOrWhiteSpace(StateService.SearchTerm);
+        var hasCategory = StateService.CategoryId.HasValue;
+        
+        if (hasSearch && hasCategory && StateService.CategoryId.HasValue)
+        {
+            var categoryName = categories?.FirstOrDefault(c => c.Id == StateService.CategoryId.Value)?.Name ?? "category";
+            return $"Searching '{StateService.SearchTerm}' in {categoryName}...";
+        }
+        else if (hasSearch)
+        {
+            return $"Searching for '{StateService.SearchTerm}'...";
+        }
+        else if (hasCategory && StateService.CategoryId.HasValue)
+        {
+            var categoryName = categories?.FirstOrDefault(c => c.Id == StateService.CategoryId.Value)?.Name ?? "category";
+            return $"Loading {categoryName} products...";
+        }
+        else
+        {
+            return "Loading products...";
+        }
+    }
+
+    /// <summary>
+    /// Retries the last failed operation
+    /// </summary>
+    private async Task RetryLastOperation()
+    {
+        if (lastFailedOperation != null)
+        {
+            await lastFailedOperation();
+        }
+    }
+
+    private void NavigateToDetails(int productId)
+    {
+        Navigation.NavigateTo($"/product/{productId}");
+    }
+
+    private void NavigateToCreate()
+    {
+        Navigation.NavigateTo("/product/create");
+    }
+}

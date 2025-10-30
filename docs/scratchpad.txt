@@ -1,0 +1,88 @@
+
+The ServerApp/Program.cs file has been updated to include new endpoints for managing products. These endpoints allow clients to create, read details, update, and delete products. The new endpoints follow RESTful conventions and include proper error handling and validation.
+
+The ClientApp needs the following updates:
+
+1. Model and Service Updates:
+1a. The Product class needs to be refactored out of ProductService.cs into its own .cs file in a ClientApp/Models folder
+  * Must match server DTOs from ServerApp/Product.cs
+  * Include appropriate validation attributes
+  * Add XML documentation for the model
+
+1b. ProductService.cs updates:
+  * Add new public async Task<Product> methods for CRUD operations
+  * Configure base URL for API endpoints in constructor
+  * Implement comprehensive error handling with retry policy
+  * Add caching with 5-minute duration for frequently accessed data
+  * Register service in Program.cs with appropriate scope
+  * Add XML documentation for the service and methods
+
+2. Component Updates:
+All components should use Bootstrap styling and include proper XML documentation.
+
+2a. Navigation:
+- Update NavMenu.razor to include new Product management links
+- Define routes: 
+  * /products (list)
+  * /products/{id} (details)
+  * /products/edit/{id} (edit)
+  * /products/delete/{id} (delete)
+
+2b. Product List Page:
+- Display list of product components with loading state
+- Include sorting, filtering, and pagination capabilities
+- Each product component has a "Details" button
+- Add "Create New Product" button at top
+- Implement client-side search functionality
+
+2c. Product Details Page:
+- Display individual product record
+- Show loading state during data fetch
+- Include "Edit" and "Delete" navigation buttons
+- Add "Back to List" button
+- Handle and display any loading errors
+
+2d. Edit Product Page:
+- Form for editing product details
+- Client-side form validation with feedback
+- Loading state during save operation
+- "Save" and "Cancel" buttons
+- Prevent duplicate form submissions
+
+2e. Delete Product Page:
+- Display product details to be deleted
+- Show confirmation dialog before delete
+- Loading state during delete operation
+- "Confirm Delete" and "Cancel" buttons
+- Handle and display any errors
+
+2f. Status Modal Component (Shared):
+- Create in Shared folder for reuse
+- Bootstrap-styled modal
+- Auto-dismiss after 5 seconds
+- Centered positioning
+- Success message in green, error in red
+- Include error details when available
+- "OK" button to dismiss and navigate
+
+2g. Error Handling:
+- Implement global error handling
+- Display user-friendly error messages
+- Handle network errors gracefully
+- Show appropriate loading states
+- Implement retry policy for failed requests
+- Log errors appropriately
+
+2h. Testing Requirements:
+- Unit tests for all components
+- Integration tests for API calls
+- Test error scenarios and loading states
+- Test form validation
+- Test navigation flow
+
+2i. Documentation:
+- XML documentation for all public members
+- Inline comments for complex logic
+- Update README.md with new features
+- Include usage examples in documentation
+

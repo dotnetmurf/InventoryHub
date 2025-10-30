@@ -1,0 +1,102 @@
+@using ClientApp.Models
+
+@if (Error != null)
+{
+    <div class="alert alert-@GetAlertClass() alert-dismissible fade show" role="alert">
+        <div class="d-flex">
+            <div class="flex-shrink-0">
+                <span style="font-size: 1.5rem;">@GetIcon()</span>
+            </div>
+            <div class="flex-grow-1 ms-3">
+                <h5 class="alert-heading mb-2">@Error.Title</h5>
+                <p class="mb-2">@Error.Message</p>
+                
+                @if (!string.IsNullOrEmpty(Error.ActionMessage))
+                {
+                    <hr class="my-2" />
+                    <div class="mb-0 small">
+                        <strong>What you can do:</strong><br />
+                        @foreach (var line in Error.ActionMessage.Split('\n'))
+                        {
+                            <div>@line</div>
+                        }
+                    </div>
+                }
+                
+                @if (Error.IsRetryable && OnRetry.HasDelegate)
+                {
+                    <hr class="my-2" />
+                    <button class="btn btn-sm btn-outline-@GetButtonClass()" @onclick="OnRetry">
+                        🔄 Try Again
+                    </button>
+                }
+            </div>
+            <button type="button" class="btn-close" @onclick="HandleDismiss" aria-label="Close"></button>
+        </div>
+    </div>
+}
+
+@code {
+    /// <summary>
+    /// The error to display
+    /// </summary>
+    [Parameter]
+    public UserError? Error { get; set; }
+
+    /// <summary>
+    /// Callback when the error alert is dismissed
+    /// </summary>
+    [Parameter]
+    public EventCallback OnDismiss { get; set; }
+
+    /// <summary>
+    /// Callback when the user clicks the retry button
+    /// </summary>
+    [Parameter]
+    public EventCallback OnRetry { get; set; }
+
+    /// <summary>
+    /// Gets the Bootstrap alert CSS class based on error severity
+    /// </summary>
+    private string GetAlertClass() => Error?.Severity switch
+    {
+        ErrorSeverity.Info => "info",
+        ErrorSeverity.Warning => "warning",
+        ErrorSeverity.Error => "danger",
+        ErrorSeverity.Critical => "danger",
+        _ => "secondary"
+    };
+
+    /// <summary>
+    /// Gets the Bootstrap button CSS class based on error severity
+    /// </summary>
+    private string GetButtonClass() => Error?.Severity switch
+    {
+        ErrorSeverity.Info => "info",
+        ErrorSeverity.Warning => "warning",
+        _ => "danger"
+    };
+
+    /// <summary>
+    /// Gets the icon emoji based on error severity
+    /// </summary>
+    private string GetIcon() => Error?.Severity switch
+    {
+        ErrorSeverity.Info => "ℹ️",
+        ErrorSeverity.Warning => "⚠️",
+        ErrorSeverity.Error => "❌",
+        ErrorSeverity.Critical => "🔴",
+        _ => "❗"
+    };
+
+    /// <summary>
+    /// Handles the dismiss button click
+    /// </summary>
+    private async Task HandleDismiss()
+    {
+        if (OnDismiss.HasDelegate)
+        {
+            await OnDismiss.InvokeAsync();
+        }
+    }
+}

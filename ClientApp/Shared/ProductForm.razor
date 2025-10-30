@@ -1,0 +1,208 @@
+@* 
+    ProductForm Component
+    
+    Reusable form component for creating and editing products.
+    Handles validation, data binding, and form submission.
+    
+    Parameters:
+    - Product: The product to edit (empty for create mode)
+    - OnSubmit: Event callback when form is submitted with valid data
+    - OnCancel: Event callback when user cancels the operation
+    - IsEditMode: Boolean indicating if form is in edit mode (affects button text)
+*@
+
+@using ClientApp.Services
+@inject ProductService ProductService
+
+<EditForm Model="@CurrentProduct" OnValidSubmit="HandleSubmit">
+    <DataAnnotationsValidator />
+    <ValidationSummary class="alert alert-danger" />
+
+    <div class="mb-3">
+        <label for="name" class="form-label">Product Name</label>
+        <InputText id="name" class="form-control" @bind-Value="CurrentProduct.Name" />
+        <ValidationMessage For="@(() => CurrentProduct.Name)" />
+    </div>
+
+    <div class="mb-3">
+        <label for="description" class="form-label">Description</label>
+        <InputTextArea id="description" class="form-control" @bind-Value="CurrentProduct.Description" rows="3" />
+        <ValidationMessage For="@(() => CurrentProduct.Description)" />
+    </div>
+
+    <div class="row">
+        <div class="col-md-6 mb-3">
+            <label for="price" class="form-label">Price</label>
+            <InputNumber id="price" class="form-control" @bind-Value="CurrentProduct.Price" />
+            <ValidationMessage For="@(() => CurrentProduct.Price)" />
+        </div>
+
+        <div class="col-md-6 mb-3">
+            <label for="stock" class="form-label">Stock</label>
+            <InputNumber id="stock" class="form-control" @bind-Value="CurrentProduct.Stock" />
+            <ValidationMessage For="@(() => CurrentProduct.Stock)" />
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-12 mb-3">
+            <label for="category" class="form-label">Category</label>
+            @if (availableCategories == null || availableCategories.Length == 0)
+            {
+                <div class="text-muted">
+                    <em>Loading categories...</em>
+                </div>
+            }
+            else
+            {
+                <InputSelect id="category" class="form-select" @bind-Value="SelectedCategoryId">
+                    <option value="0">-- Select a Category --</option>
+                    @foreach (var category in availableCategories)
+                    {
+                        <option value="@category.Id">@category.Name (ID: @category.Id)</option>
+                    }
+                </InputSelect>
+                <ValidationMessage For="@(() => CurrentProduct.CategoryId)" />
+            }
+        </div>
+    </div>
+
+    <div class="mt-4">
+        <button type="submit" class="btn btn-primary me-2">
+            @(IsEditMode ? "Update Product" : "Create Product")
+        </button>
+        <button type="button" class="btn btn-secondary" @onclick="HandleCancel">
+            Cancel
+        </button>
+    </div>
+</EditForm>
+
+@code {
+    /// <summary>
+    /// The product to edit (empty for create mode)
+    /// </summary>
+    [Parameter]
+    public Product Product { get; set; } = new();
+
+    /// <summary>
+    /// Event callback invoked when form is submitted with valid data
+    /// </summary>
+    [Parameter]
+    public EventCallback<Product> OnSubmit { get; set; }
+
+    /// <summary>
+    /// Event callback invoked when user cancels the operation
+    /// </summary>
+    [Parameter]
+    public EventCallback OnCancel { get; set; }
+
+    /// <summary>
+    /// Indicates whether the form is in edit mode (true) or create mode (false)
+    /// </summary>
+    [Parameter]
+    public bool IsEditMode { get; set; }
+
+    /// <summary>
+    /// Working copy of the product being edited
+    /// </summary>
+    /// <remarks>
+    /// Creating a copy prevents modifying the original product object
+    /// until the user submits the form
+    /// </remarks>
+    private Product CurrentProduct { get; set; } = new();
+
+    /// <summary>
+    /// List of available categories fetched from the API
+    /// </summary>
+    private Category[]? availableCategories;
+
+    /// <summary>
+    /// Selected category ID bound to the dropdown
+    /// </summary>
+    /// <remarks>
+    /// When changed, updates both CategoryId and Category properties
+    /// </remarks>
+    private int SelectedCategoryId
+    {
+        get => CurrentProduct.CategoryId;
+        set
+        {
+            CurrentProduct.CategoryId = value;
+            var selectedCategory = availableCategories?.FirstOrDefault(c => c.Id == value);
+            if (selectedCategory != null)
+            {
+                CurrentProduct.Category.Id = selectedCategory.Id;
+                CurrentProduct.Category.Name = selectedCategory.Name;
+            }
+        }
+    }
+
+    /// <summary>
+    /// Lifecycle method called when component is initialized
+    /// </summary>
+    /// <remarks>
+    /// Loads available categories from the API
+    /// </remarks>
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            availableCategories = await ProductService.GetCategoriesAsync();
+        }
+        catch (Exception ex)
+        {
+            // Log error but don't prevent form from loading
+            Console.WriteLine($"Error loading categories: {ex.Message}");
+            availableCategories = Array.Empty<Category>();
+        }
+    }
+
+    /// <summary>
+    /// Lifecycle method called when parameters are set or changed
+    /// </summary>
+    /// <remarks>
+    /// Creates a deep copy of the Product parameter to avoid
+    /// modifying the original object during editing
+    /// </remarks>
+    protected override void OnParametersSet()
+    {
+        // Create a copy to avoid modifying the original
+        CurrentProduct = new Product
+        {
+            Id = Product.Id,
+            Name = Product.Name,
+            Description = Product.Description,
+            Price = Product.Price,
+            Stock = Product.Stock,
+            CategoryId = Product.CategoryId,
+            Category = new Category 
+            { 
+                Id = Product.Category.Id, 
+                Name = Product.Category.Name 
+            }
+        };
+    }
+
+    /// <summary>
+    /// Handles form submission
+    /// </summary>
+    /// <remarks>
+    /// Invokes the OnSubmit callback with the edited product data
+    /// </remarks>
+    private async Task HandleSubmit()
+    {
+        await OnSubmit.InvokeAsync(CurrentProduct);
+    }
+
+    /// <summary>
+    /// Handles form cancellation
+    /// </summary>
+    /// <remarks>
+    /// Invokes the OnCancel callback to allow parent component
+    /// to handle navigation or cleanup
+    /// </remarks>
+    private async Task HandleCancel()
+    {
+        await OnCancel.InvokeAsync();
+    }
+}

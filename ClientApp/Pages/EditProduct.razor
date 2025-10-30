@@ -1,0 +1,139 @@
+@page "/product/edit/{id:int}"
+@using ClientApp.Models
+@using ClientApp.Services
+@inject ProductService ProductService
+@inject NavigationManager Navigation
+@inject ErrorHandlerService ErrorHandler
+@inject ToastService ToastService
+
+<PageTitle>Edit Product - InventoryHub</PageTitle>
+
+<div class="container mt-4">
+    <h2>Edit Product</h2>
+
+    <!-- Error Alert with Retry Support -->
+    <ErrorAlert Error="@currentError" 
+                OnDismiss="() => currentError = null" 
+                OnRetry="RetryLastOperation" />
+
+    @if (!string.IsNullOrEmpty(loadingMessage))
+    {
+        <div class="text-center">
+            <div class="spinner-border" role="status">
+                <span class="visually-hidden">@loadingMessage</span>
+            </div>
+            <p class="mt-2 text-muted">@loadingMessage</p>
+        </div>
+    }
+    else if (product != null)
+    {
+        <div class="card">
+            <div class="card-body">
+                <ProductForm Product="@product" 
+                            OnSubmit="HandleUpdate" 
+                            OnCancel="HandleCancel"
+                            IsEditMode="true" />
+            </div>
+        </div>
+    }
+    else
+    {
+        <div class="alert alert-warning">
+            Product not found.
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter]
+    public int Id { get; set; }
+
+    private Product? product;
+    private string loadingMessage = string.Empty;
+    private UserError? currentError;
+    private Func<Task>? lastFailedOperation;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadProductAsync();
+    }
+
+    /// <summary>
+    /// Loads product details from the server
+    /// </summary>
+    private async Task LoadProductAsync()
+    {
+        lastFailedOperation = LoadProductAsync;
+        
+        try
+        {
+            loadingMessage = "Loading product details...";
+            currentError = null;
+            product = await ProductService.GetProductByIdAsync(Id);
+        }
+        catch (Exception ex)
+        {
+            currentError = ErrorHandler.HandleException(ex, "loading product details");
+        }
+        finally
+        {
+            loadingMessage = string.Empty;
+        }
+    }
+
+    /// <summary>
+    /// Handles product update
+    /// </summary>
+    private async Task HandleUpdate(Product updatedProduct)
+    {
+        lastFailedOperation = async () => await HandleUpdate(updatedProduct);
+        
+        try
+        {
+            loadingMessage = "Updating product...";
+            currentError = null;
+            
+            var request = new UpdateProductRequest
+            {
+                Name = updatedProduct.Name,
+                Description = updatedProduct.Description,
+                Price = updatedProduct.Price,
+                Stock = updatedProduct.Stock,
+                CategoryId = updatedProduct.CategoryId,
+                Category = updatedProduct.Category
+            };
+
+            await ProductService.UpdateProductAsync(Id, request);
+            ToastService.ShowSuccess($"Product '{updatedProduct.Name}' updated successfully!");
+            // Navigate to product details page after successful update
+            Navigation.NavigateTo($"/product/{Id}");
+        }
+        catch (Exception ex)
+        {
+            currentError = ErrorHandler.HandleException(ex, "updating product");
+        }
+        finally
+        {
+            loadingMessage = string.Empty;
+        }
+    }
+
+    /// <summary>
+    /// Retries the last failed operation
+    /// </summary>
+    private async Task RetryLastOperation()
+    {
+        if (lastFailedOperation != null)
+        {
+            await lastFailedOperation();
+        }
+    }
+
+    /// <summary>
+    /// Handles cancel action and returns to products list
+    /// </summary>
+    private void HandleCancel()
+    {
+        Navigation.NavigateTo("/products");
+    }
+}

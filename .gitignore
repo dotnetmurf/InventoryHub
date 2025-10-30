@@ -1,0 +1,107 @@
+########################################
+# General .NET build artifacts
+########################################
+bin/
+obj/
+out/
+*.dll
+*.exe
+*.pdb
+*.cache
+*.log
+
+########################################
+# User-specific and IDE files
+########################################
+.vs/
+.idea/
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+*.dbmdl
+
+########################################
+# NuGet and package management
+########################################
+*.nupkg
+*.snupkg
+packages/
+project.lock.json
+*.nuspec
+
+########################################
+# ASP.NET Core Web API specifics
+########################################
+# Static assets and tooling
+wwwroot/
+node_modules/
+bower_components/
+dist/
+swagger/
+*.json
+*.xml
+
+# Logs and diagnostics
+*.log
+logs/
+*.junit.xml
+
+########################################
+# Blazor WebAssembly specifics
+########################################
+# Compressed assets
+*.gz
+*.br
+
+# Service worker and manifest
+service-worker-assets.js
+manifest.json
+
+# Client-side build artifacts
+wwwroot/
+dist/
+*.webmanifest
+
+########################################
+# Environment and secrets
+########################################
+.env
+.env.*
+secrets.json
+appsettings.*.json
+
+########################################
+# OS-specific files
+########################################
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Linux
+*~
+
+########################################
+# Optional: Docker and deployment
+########################################
+Dockerfile
+docker-compose.yml
+*.tar
+*.gz
+*.zip
+
+########################################
+# Optional: Test artifacts
+########################################
+TestResults/
+coverage/
+*.coverage
+*.coveragexml
+
+---

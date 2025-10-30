@@ -1,0 +1,108 @@
+@page "/product/create"
+@using ClientApp.Models
+@using ClientApp.Services
+@inject ProductService ProductService
+@inject NavigationManager Navigation
+@inject ErrorHandlerService ErrorHandler
+@inject ToastService ToastService
+
+<PageTitle>Create Product - InventoryHub</PageTitle>
+
+<div class="container mt-4">
+    <h2>Create New Product</h2>
+
+    <!-- Error Alert with Retry Support -->
+    <ErrorAlert Error="@currentError" 
+                OnDismiss="() => currentError = null" 
+                OnRetry="RetryLastOperation" />
+
+    @if (!string.IsNullOrEmpty(loadingMessage))
+    {
+        <div class="text-center my-4">
+            <div class="spinner-border" role="status">
+                <span class="visually-hidden">@loadingMessage</span>
+            </div>
+            <p class="mt-2 text-muted">@loadingMessage</p>
+        </div>
+    }
+
+    <div class="card">
+        <div class="card-body">
+            <ProductForm Product="@newProduct" 
+                        OnSubmit="HandleCreate" 
+                        OnCancel="HandleCancel"
+                        IsEditMode="false" />
+        </div>
+    </div>
+</div>
+
+@code {
+    private Product newProduct = new();
+    private UserError? currentError;
+    private Func<Task>? lastFailedOperation;
+    private string loadingMessage = string.Empty;
+
+    /// <summary>
+    /// Handles product creation
+    /// </summary>
+    private async Task HandleCreate(Product product)
+    {
+        lastFailedOperation = async () => await HandleCreate(product);
+        
+        try
+        {
+            loadingMessage = "Creating product...";
+            currentError = null;
+            
+            var request = new CreateProductRequest
+            {
+                Name = product.Name,
+                Description = product.Description,
+                Price = product.Price,
+                Stock = product.Stock,
+                CategoryId = product.CategoryId,
+                Category = product.Category
+            };
+
+            var createdProduct = await ProductService.CreateProductAsync(request);
+            
+            if (createdProduct != null)
+            {
+                ToastService.ShowSuccess($"Product '{createdProduct.Name}' created successfully!");
+                Navigation.NavigateTo($"/product/{createdProduct.Id}");
+            }
+            else
+            {
+                ToastService.ShowSuccess("Product created successfully!");
+                Navigation.NavigateTo($"/products?refresh={DateTime.Now.Ticks}");
+            }
+        }
+        catch (Exception ex)
+        {
+            currentError = ErrorHandler.HandleException(ex, "creating product");
+        }
+        finally
+        {
+            loadingMessage = string.Empty;
+        }
+    }
+
+    /// <summary>
+    /// Retries the last failed operation
+    /// </summary>
+    private async Task RetryLastOperation()
+    {
+        if (lastFailedOperation != null)
+        {
+            await lastFailedOperation();
+        }
+    }
+
+    /// <summary>
+    /// Handles cancel action and returns to products list
+    /// </summary>
+    private void HandleCancel()
+    {
+        Navigation.NavigateTo($"/products?refresh={DateTime.Now.Ticks}");
+    }
+}
