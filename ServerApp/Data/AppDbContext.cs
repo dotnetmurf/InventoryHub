@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using ServerApp.Models;
+using SharedModels;
 
 namespace ServerApp.Data;
 
@@ -18,7 +19,7 @@ public class AppDbContext : DbContext
     /// <summary>
     /// Gets or sets the products in the database
     /// </summary>
-    public DbSet<Product> Products { get; set; }
+    public DbSet<ServerApp.Models.Product> Products { get; set; }
 
     /// <summary>
     /// Configures the database model
@@ -28,7 +29,7 @@ public class AppDbContext : DbContext
         base.OnModelCreating(modelBuilder);
 
         // Configure Product entity
-        modelBuilder.Entity<Product>(entity =>
+        modelBuilder.Entity<ServerApp.Models.Product>(entity =>
         {
             entity.HasKey(e => e.Id);
             entity.Property(e => e.Name).IsRequired();
