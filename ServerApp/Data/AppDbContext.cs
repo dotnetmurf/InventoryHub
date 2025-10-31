@@ -19,7 +19,7 @@ public class AppDbContext : DbContext
     /// <summary>
     /// Gets or sets the products in the database
     /// </summary>
-    public DbSet<ServerApp.Models.Product> Products { get; set; }
+    public DbSet<SharedModels.Product> Products { get; set; }
 
     /// <summary>
     /// Configures the database model
@@ -29,7 +29,7 @@ public class AppDbContext : DbContext
         base.OnModelCreating(modelBuilder);
 
         // Configure Product entity
-        modelBuilder.Entity<ServerApp.Models.Product>(entity =>
+        modelBuilder.Entity<SharedModels.Product>(entity =>
         {
             entity.HasKey(e => e.Id);
             entity.Property(e => e.Name).IsRequired();
@@ -38,3 +38,5 @@ public class AppDbContext : DbContext
         });
     }
 }
+
+

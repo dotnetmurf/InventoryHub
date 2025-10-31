@@ -111,7 +111,7 @@ public static class ProductEndpoints
                     .Take(pageSize)
                     .ToListAsync();
 
-                return new ServerApp.Models.PaginatedList<ServerApp.Models.Product>
+                return new SharedModels.PaginatedList<SharedModels.Product>
                 {
                     Items = products,
                     PageNumber = pageNumber,
@@ -170,7 +170,7 @@ public static class ProductEndpoints
     /// <summary>
     /// Creates a new product
     /// </summary>
-    private static async Task<IResult> CreateProduct(HttpContext context, ServerApp.Models.Product product)
+    private static async Task<IResult> CreateProduct(HttpContext context, SharedModels.Product product)
     {
         var logger = context.RequestServices.GetRequiredService<ILogger<Program>>();
 
@@ -204,7 +204,7 @@ public static class ProductEndpoints
     /// <summary>
     /// Updates an existing product
     /// </summary>
-    private static async Task<IResult> UpdateProduct(HttpContext context, int id, ServerApp.Models.Product updatedProduct)
+    private static async Task<IResult> UpdateProduct(HttpContext context, int id, SharedModels.Product updatedProduct)
     {
         var logger = context.RequestServices.GetRequiredService<ILogger<Program>>();
 
@@ -331,3 +331,6 @@ public static class ProductEndpoints
         }
     }
 }
+
+
+

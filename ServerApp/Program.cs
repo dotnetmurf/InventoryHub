@@ -146,7 +146,7 @@ app.MapGet("/api/categories", (ILogger<Program> logger) =>
 })
 .WithName("GetCategories")
 .WithTags("Categories")
-.Produces<ServerApp.Models.Category[]>(StatusCodes.Status200OK);
+.Produces<SharedModels.Category[]>(StatusCodes.Status200OK);
 
 // ============================================
 // SECTION 6: Static Files & Documentation
@@ -190,3 +190,6 @@ app.UseSwaggerUI(options =>
 logger.LogInformation("InventoryHub ServerApp configured and ready to serve requests");
 
 app.Run();
+
+
+
