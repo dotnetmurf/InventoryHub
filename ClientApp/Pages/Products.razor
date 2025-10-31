@@ -1,5 +1,7 @@
 @page "/products"
-@using ClientApp.Models
+@using Product = SharedModels.Product
+@using Category = SharedModels.Category
+@using PaginatedList = SharedModels.PaginatedList<SharedModels.Product>
 @using ClientApp.Services
 @using Microsoft.AspNetCore.Components.Routing
 @implements IDisposable

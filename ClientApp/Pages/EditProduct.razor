@@ -1,4 +1,6 @@
 @page "/product/edit/{id:int}"
+@using Product = SharedModels.Product
+@using Category = SharedModels.Category
 @using ClientApp.Models
 @using ClientApp.Services
 @inject ProductService ProductService
@@ -100,7 +102,11 @@
                 Price = updatedProduct.Price,
                 Stock = updatedProduct.Stock,
                 CategoryId = updatedProduct.CategoryId,
-                Category = updatedProduct.Category
+                Category = new ClientApp.Models.Category 
+                { 
+                    Id = updatedProduct.Category.Id, 
+                    Name = updatedProduct.Category.Name 
+                }
             };
 
             await ProductService.UpdateProductAsync(Id, request);

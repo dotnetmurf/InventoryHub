@@ -1,6 +1,9 @@
 using System.Net;
 using System.Net.Http.Json;
 using ClientApp.Models;
+using Product = SharedModels.Product;
+using Category = SharedModels.Category;
+using PaginatedList = SharedModels.PaginatedList<SharedModels.Product>;
 
 namespace ClientApp.Services;
 
