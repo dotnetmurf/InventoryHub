@@ -55,11 +55,11 @@ builder.Logging.ClearProviders();
 builder.Logging.AddConsole();
 builder.Logging.SetMinimumLevel(LogLevel.Information);
 
-// CORS - Allow specific Blazor client origins
+// CORS - Allow any client origins (for application demonstration purposes)
 builder.Services.AddCors(options =>
 {
     options.AddDefaultPolicy(policy =>
-        policy.WithOrigins("http://localhost:5019", "https://localhost:7253")
+        policy.AllowAnyOrigin()
               .AllowAnyHeader()
               .AllowAnyMethod());
 });
@@ -155,20 +155,33 @@ app.MapGet("/api/categories", (ILogger<Program> logger) =>
 app.UseStaticFiles();
 
 // Swagger UI (Development only)
-if (app.Environment.IsDevelopment())
+// if (app.Environment.IsDevelopment())
+// {
+//     app.UseSwagger();
+//     app.UseSwaggerUI(options =>
+//     {
+//         options.SwaggerEndpoint("/swagger/v1/swagger.json", "InventoryHub API v1");
+//         options.RoutePrefix = string.Empty;
+//         options.DocumentTitle = "InventoryHub API Documentation";
+//         options.EnableTryItOutByDefault();
+//         options.DisplayRequestDuration();
+//         options.DefaultModelsExpandDepth(2);
+//         options.DefaultModelExpandDepth(2);
+//     });
+// }
+
+// Swagger UI (all environments, for application demonstration purposes)
+app.UseSwagger();
+app.UseSwaggerUI(options =>
 {
-    app.UseSwagger();
-    app.UseSwaggerUI(options =>
-    {
-        options.SwaggerEndpoint("/swagger/v1/swagger.json", "InventoryHub API v1");
-        options.RoutePrefix = string.Empty;
-        options.DocumentTitle = "InventoryHub API Documentation";
-        options.EnableTryItOutByDefault();
-        options.DisplayRequestDuration();
-        options.DefaultModelsExpandDepth(2);
-        options.DefaultModelExpandDepth(2);
-    });
-}
+    options.SwaggerEndpoint("/swagger/v1/swagger.json", "InventoryHub API v1");
+    options.RoutePrefix = string.Empty;
+    options.DocumentTitle = "InventoryHub API Documentation";
+    options.EnableTryItOutByDefault();
+    options.DisplayRequestDuration();
+    options.DefaultModelsExpandDepth(2);
+    options.DefaultModelExpandDepth(2);
+});
 
 // ============================================
 // SECTION 7: Start Application
