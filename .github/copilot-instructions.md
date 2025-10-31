@@ -48,6 +48,14 @@ InventoryHub is a full-stack solution with a Blazor WebAssembly client (`ClientA
 - `ServerApp/Endpoints/ProductEndpoints.cs`: Example of minimal API endpoint.
 - `ServerApp/Data/AppDbContext.cs`: EF Core setup.
 - `ClientApp/Shared/ToastContainer.razor`: UI error/success notification pattern.
+- `SharedModels/`: Shared DTOs for client-server contract consistency.
+- `REFACTORING.md`: Comprehensive refactoring recommendations and improvement opportunities.
+
+## Known Technical Debt
+- DTOs duplicated in ClientApp/Models and ServerApp/Models (migration to SharedModels in progress)
+- Business logic mixed with HTTP handling in ProductEndpoints.cs (consider extracting to service layer)
+- Validation logic scattered across codebase (consolidation recommended)
+- CORS policy set to AllowAnyOrigin (should be restricted in production)
 
 ---
-_If any section is unclear or missing important project-specific details, please provide feedback to improve these instructions._
+_For detailed refactoring recommendations, see `REFACTORING.md`. If any section is unclear or missing important project-specific details, please provide feedback to improve these instructions._
