@@ -1,9 +1,7 @@
 using System.Net;
 using System.Net.Http.Json;
 using ClientApp.Models;
-using Product = SharedModels.Product;
-using Category = SharedModels.Category;
-using PaginatedList = SharedModels.PaginatedList<SharedModels.Product>;
+using SharedModels;
 
 namespace ClientApp.Services;
 
@@ -40,7 +38,7 @@ public class ProductService
     /// <param name="categoryId">Optional category ID to filter products by category</param>
     /// <returns>Paginated list of products</returns>
     /// <exception cref="HttpRequestException">Thrown when API request fails</exception>
-    public async Task<PaginatedList<Product>> GetProductsAsync(int pageNumber = 1, int pageSize = 12, string? searchTerm = null, int? categoryId = null)
+    public async Task<SharedModels.PaginatedList<SharedModels.Product>> GetProductsAsync(int pageNumber = 1, int pageSize = 12, string? searchTerm = null, int? categoryId = null)
     {
         try
         {
@@ -61,8 +59,8 @@ public class ProductService
             }
 
             var queryString = string.Join("&", queryParams);
-            var response = await _httpClient.GetFromJsonAsync<PaginatedList<Product>>($"/api/products?{queryString}");
-            return response ?? new PaginatedList<Product>();
+            var response = await _httpClient.GetFromJsonAsync<SharedModels.PaginatedList<SharedModels.Product>>($"/api/products?{queryString}");
+            return response ?? new SharedModels.PaginatedList<SharedModels.Product>();
         }
         catch (HttpRequestException ex)
         {
@@ -109,7 +107,7 @@ public class ProductService
     /// <param name="id">Product ID</param>
     /// <returns>Product if found</returns>
     /// <exception cref="ProductServiceException">Thrown when product not found or API request fails</exception>
-    public async Task<Product?> GetProductByIdAsync(int id)
+    public async Task<SharedModels.Product?> GetProductByIdAsync(int id)
     {
         try
         {
@@ -135,7 +133,7 @@ public class ProductService
             // Throw for other error status codes
             response.EnsureSuccessStatusCode();
             
-            return await response.Content.ReadFromJsonAsync<Product>();
+            return await response.Content.ReadFromJsonAsync<SharedModels.Product>();
         }
         catch (ProductServiceException)
         {
@@ -180,7 +178,7 @@ public class ProductService
     /// <returns>Created product with assigned ID</returns>
     /// <exception cref="HttpRequestException">Thrown when API request fails</exception>
     /// <exception cref="ValidationException">Thrown when validation fails with detailed error information</exception>
-    public async Task<Product?> CreateProductAsync(CreateProductRequest request)
+    public async Task<SharedModels.Product?> CreateProductAsync(CreateProductRequest request)
     {
         try
         {
@@ -240,7 +238,7 @@ public class ProductService
     /// <returns>Updated product</returns>
     /// <exception cref="HttpRequestException">Thrown when API request fails</exception>
     /// <exception cref="ValidationException">Thrown when validation fails with detailed error information</exception>
-    public async Task<Product?> UpdateProductAsync(int id, UpdateProductRequest request)
+    public async Task<SharedModels.Product?> UpdateProductAsync(int id, UpdateProductRequest request)
     {
         try
         {
@@ -341,12 +339,12 @@ public class ProductService
     /// </summary>
     /// <returns>Array of available categories</returns>
     /// <exception cref="HttpRequestException">Thrown when API request fails</exception>
-    public async Task<Category[]> GetCategoriesAsync()
+    public async Task<SharedModels.Category[]> GetCategoriesAsync()
     {
         try
         {
-            var response = await _httpClient.GetFromJsonAsync<Category[]>("/api/categories");
-            return response ?? Array.Empty<Category>();
+            var response = await _httpClient.GetFromJsonAsync<SharedModels.Category[]>("/api/categories");
+            return response ?? Array.Empty<SharedModels.Category>();
         }
         catch (HttpRequestException ex)
         {
@@ -409,3 +407,4 @@ public class ProductService
         }
     }
 }
+
