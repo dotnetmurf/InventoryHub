@@ -1,5 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 using ServerApp.Models;
+using SharedModels;
 
 namespace ServerApp.Services;
 
