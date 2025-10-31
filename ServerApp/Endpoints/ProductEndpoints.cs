@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using ServerApp.Data;
 using ServerApp.Models;
 using ServerApp.Services;
+using SharedModels;
 
 namespace ServerApp.Endpoints;
 
@@ -110,7 +111,7 @@ public static class ProductEndpoints
                     .Take(pageSize)
                     .ToListAsync();
 
-                return new PaginatedList<Product>
+                return new ServerApp.Models.PaginatedList<ServerApp.Models.Product>
                 {
                     Items = products,
                     PageNumber = pageNumber,
@@ -169,7 +170,7 @@ public static class ProductEndpoints
     /// <summary>
     /// Creates a new product
     /// </summary>
-    private static async Task<IResult> CreateProduct(HttpContext context, Product product)
+    private static async Task<IResult> CreateProduct(HttpContext context, ServerApp.Models.Product product)
     {
         var logger = context.RequestServices.GetRequiredService<ILogger<Program>>();
 
@@ -203,7 +204,7 @@ public static class ProductEndpoints
     /// <summary>
     /// Updates an existing product
     /// </summary>
-    private static async Task<IResult> UpdateProduct(HttpContext context, int id, Product updatedProduct)
+    private static async Task<IResult> UpdateProduct(HttpContext context, int id, ServerApp.Models.Product updatedProduct)
     {
         var logger = context.RequestServices.GetRequiredService<ILogger<Program>>();
 
