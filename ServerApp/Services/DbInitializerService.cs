@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using ServerApp.Data;
+using SharedModels;
 
 namespace ServerApp.Services;
 
