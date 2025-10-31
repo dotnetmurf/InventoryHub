@@ -1,5 +1,6 @@
 using Microsoft.Extensions.Caching.Memory;
 using System.Collections.Concurrent;
+using SharedModels;
 
 namespace ServerApp.Services;
 
