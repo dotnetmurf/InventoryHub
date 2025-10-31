@@ -84,3 +84,6 @@ public static class PerformanceMiddlewareExtensions
         return app.UseMiddleware<PerformanceMiddleware>();
     }
 }
+
+
+

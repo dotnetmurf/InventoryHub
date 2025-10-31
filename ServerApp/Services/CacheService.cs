@@ -1,5 +1,6 @@
 using Microsoft.Extensions.Caching.Memory;
 using System.Collections.Concurrent;
+using SharedModels;
 
 namespace ServerApp.Services;
 
@@ -143,3 +144,6 @@ public class CacheService
         return _productCacheKeys.Count;
     }
 }
+
+
+

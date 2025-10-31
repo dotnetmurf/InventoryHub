@@ -1,5 +1,5 @@
 @page "/products"
-@using ClientApp.Models
+@using SharedModels
 @using ClientApp.Services
 @using Microsoft.AspNetCore.Components.Routing
 @implements IDisposable
@@ -277,8 +277,8 @@
 </div>
 
 @code {
-    private PaginatedList<Product>? products;
-    private Category[]? categories;
+    private SharedModels.PaginatedList<SharedModels.Product>? products;
+    private SharedModels.Category[]? categories;
     private string loadingMessage = string.Empty;
     private bool isRefreshing = false;
     private bool showRefreshModal = false;

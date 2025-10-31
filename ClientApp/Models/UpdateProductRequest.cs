@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using Category = SharedModels.Category;
 
 namespace ClientApp.Models;
 

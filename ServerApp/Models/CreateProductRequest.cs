@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using SharedModels;
 
 namespace ServerApp.Models;
 
@@ -55,3 +56,6 @@ public class CreateProductRequest
         return Category != null && Category.Id > 0 && CategoryId > 0;
     }
 }
+
+
+

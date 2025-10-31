@@ -1,4 +1,6 @@
 @page "/product/create"
+@using Product = SharedModels.Product
+@using Category = SharedModels.Category
 @using ClientApp.Models
 @using ClientApp.Services
 @inject ProductService ProductService
@@ -61,7 +63,11 @@
                 Price = product.Price,
                 Stock = product.Stock,
                 CategoryId = product.CategoryId,
-                Category = product.Category
+                Category = new SharedModels.Category 
+                { 
+                    Id = product.Category.Id, 
+                    Name = product.Category.Name 
+                }
             };
 
             var createdProduct = await ProductService.CreateProductAsync(request);
