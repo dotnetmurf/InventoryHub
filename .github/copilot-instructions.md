@@ -1,5 +1,10 @@
 # Copilot Instructions for InventoryHub
 
+## Related Instruction Files
+
+- [Application Guidelines](./blazorwasm-webapi.instructions.md) - Detailed instructions for application-building conventions
+- [Comment Guidelines](./dotnet-comments.prompt.md) - Detailed instructions for code commenting conventions
+
 ## Project Overview
 InventoryHub is a full-stack solution with a Blazor WebAssembly client (`ClientApp`) and an ASP.NET Core minimal API server (`ServerApp`). The solution is organized for clear separation of concerns and maintainability.
 
