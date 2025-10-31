@@ -1,4 +1,0 @@
-
-Please provide a detailed step-by-step plan for implementing Add Response Compression (Brotli/Gzip).
-
-Please follow your plan for implementing Add Response Compression (Brotli/Gzip). Execute a dotnet build after completing each phase to catch any errors as soon as possible.

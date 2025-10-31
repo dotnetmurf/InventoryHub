@@ -292,3 +292,14 @@ private async Task LoadProductsAsync()
 **Bottom Line**: Your app is performing well. The recommended enhancements above would take it from "good" to "excellent" with minimal effort.
 
 Would you like me to implement any of these optimizations?
+
+Check these Common Pitfalls below:
+
+## Common Pitfalls
+
+1. **Models Drift**: Client/Server have duplicate models - keep in sync manually
+2. **State Service Lifetime**: ProductsStateService MUST be Singleton (not Scoped)
+3. **Cache Invalidation**: Always call `CacheService.InvalidateProductCaches()` after mutations
+4. **CORS Issues**: Add new client URLs to `ServerApp/Program.cs` CORS policy
+5. **Port Conflicts**: Check both launchSettings.json files if apps won't start
+6. **Validation Mismatch**: Client-side validation mirrors server - update both
