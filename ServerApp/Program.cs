@@ -9,6 +9,7 @@ using ServerApp.Endpoints;
 using ServerApp.Middleware;
 using ServerApp.Models;
 using ServerApp.Services;
+using SharedModels;
 
 // ============================================
 // SECTION 1: Application Builder Setup
@@ -145,7 +146,7 @@ app.MapGet("/api/categories", (ILogger<Program> logger) =>
 })
 .WithName("GetCategories")
 .WithTags("Categories")
-.Produces<Category[]>(StatusCodes.Status200OK);
+.Produces<ServerApp.Models.Category[]>(StatusCodes.Status200OK);
 
 // ============================================
 // SECTION 6: Static Files & Documentation
